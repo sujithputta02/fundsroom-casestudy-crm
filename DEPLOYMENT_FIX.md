@@ -60,35 +60,44 @@ PrismaClientInitializationError: Unable to require `/app/node_modules/.prisma/cl
 
 ### Root Cause
 
-Alpine Linux 3.21 (used in `node:18-alpine`) ships with OpenSSL 3.x, but the Prisma binary was compiled against OpenSSL 1.1.x. The Prisma engine couldn't find the required `libssl.so.1.1` shared library.
+Alpine Linux 3.21 (used in `node:18-alpine`) ships with OpenSSL 3.x, but the Prisma binary was compiled against OpenSSL 1.1.x. Additionally, Alpine 3.21 removed the `openssl1.1-compat` package, making it impossible to install OpenSSL 1.1 compatibility libraries.
 
 ### Solution
 
-#### 1. Install OpenSSL 1.1 Compatibility Package
+Switched from Alpine Linux to Debian Slim, which has better Prisma support and proper OpenSSL compatibility.
 
-Updated `backend/Dockerfile` to include the OpenSSL 1.1 compatibility library:
+#### 1. Changed Base Image
+
+Updated `backend/Dockerfile`:
 
 ```dockerfile
-FROM node:18-alpine
+FROM node:18-slim
 
 WORKDIR /app
 
-# Install system dependencies including OpenSSL 1.1 for Prisma
-RUN apk add --no-cache python3 make g++ openssl1.1-compat
+# Install OpenSSL and other dependencies required by Prisma
+RUN apt-get update -y && apt-get install -y openssl libssl-dev ca-certificates && rm -rf /var/lib/apt/lists/*
 ```
+
+**Why Debian Slim?**
+- Better Prisma compatibility out of the box
+- Proper OpenSSL support
+- Still relatively small (smaller than full Debian)
+- More packages available than Alpine
+- Uses glibc instead of musl
 
 #### 2. Configure Prisma Binary Targets
 
-Updated `backend/prisma/schema.prisma` to explicitly generate the correct binary for Alpine Linux:
+Updated `backend/prisma/schema.prisma`:
 
 ```prisma
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl"]
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 ```
 
-The `linux-musl` target is specifically for Alpine Linux, which uses the musl C library instead of glibc.
+The `debian-openssl-3.0.x` target is specifically for Debian-based systems with OpenSSL 3.x.
 
 ---
 
@@ -103,8 +112,8 @@ The `linux-musl` target is specifically for Alpine Linux, which uses the musl C 
 - `backend/src/seed.ts` - Seed script imports
 
 ### Second Fix (Prisma OpenSSL)
-- `backend/Dockerfile` - Added OpenSSL 1.1 compatibility package
-- `backend/prisma/schema.prisma` - Added binary targets for Alpine Linux
+- `backend/Dockerfile` - Switched from Alpine to Debian Slim for better compatibility
+- `backend/prisma/schema.prisma` - Added binary targets for Debian with OpenSSL 3.x
 
 ---
 
@@ -116,9 +125,10 @@ The `linux-musl` target is specifically for Alpine Linux, which uses the musl C 
 3. **Development**: Works with Bun (which handles this automatically) and Node.js in production
 
 ### Prisma Fix
-1. **OpenSSL Compatibility**: The `openssl1.1-compat` package provides the `libssl.so.1.1` library that Prisma requires
-2. **Correct Binary**: The `linux-musl` binary target ensures Prisma generates the engine compatible with Alpine Linux
-3. **Build-time Generation**: The correct binary is generated during the Docker build process
+1. **Debian Slim Base**: Switched from Alpine to Debian Slim for better Prisma and OpenSSL compatibility
+2. **OpenSSL 3.x Support**: Debian Slim includes OpenSSL 3.x with proper library support
+3. **Correct Binary**: The `debian-openssl-3.0.x` binary target ensures Prisma generates the engine compatible with Debian
+4. **Build-time Generation**: The correct binary is generated during the Docker build process
 
 ---
 
@@ -148,11 +158,12 @@ npm run prisma:generate
 The changes have been committed and pushed to GitHub. Render will automatically:
 
 1. Clone the updated code
-2. Build the Docker image with OpenSSL 1.1 compatibility
-3. Run `npm install`
-4. Run `prisma generate` (generates linux-musl binary)
-5. Run `npm run build` (compiles TypeScript with .js extensions)
-6. Start the server with `node dist/index.js`
+2. Build the Docker image using Debian Slim base
+3. Install OpenSSL and required dependencies
+4. Run `npm install`
+5. Run `prisma generate` (generates debian-openssl-3.0.x binary)
+6. Run `npm run build` (compiles TypeScript with .js extensions)
+7. Start the server with `node dist/index.js`
 
 The application should now start successfully without module resolution or OpenSSL errors.
 
@@ -168,6 +179,8 @@ The application should now start successfully without module resolution or OpenS
 
 ### Prisma on Alpine Linux
 - Alpine Linux uses musl libc, not glibc
-- Prisma requires OpenSSL 1.1.x, but Alpine 3.21+ ships with OpenSSL 3.x
-- Install `openssl1.1-compat` package for backward compatibility
-- Use `binaryTargets = ["native", "linux-musl"]` in schema.prisma for Alpine Linux deployments
+- Alpine 3.21+ removed the `openssl1.1-compat` package
+- Prisma has better compatibility with Debian-based images
+- **Solution**: Use `node:18-slim` (Debian) instead of `node:18-alpine`
+- Use `binaryTargets = ["native", "debian-openssl-3.0.x"]` for Debian-based deployments
+- Debian Slim provides a good balance between size and compatibility
