@@ -16,6 +16,9 @@ import userRoutes from './routes/userRoutes.js';
 
 const app = express();
 
+// Trust proxy - required when running behind Render's load balancer
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(helmet());
 app.use(cors({
