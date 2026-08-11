@@ -21,9 +21,30 @@ app.set('trust proxy', 1);
 
 // Middleware
 app.use(helmet());
+
+// CORS - Allow multiple origins for development and production
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://fundsroom-casestudy-crm.vercel.app',
+  env.FRONTEND_URL // From environment variable
+].filter(Boolean);
+
 app.use(cors({
-  origin: env.FRONTEND_URL,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, Postman, curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`⚠️  Blocked CORS request from origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -59,7 +80,12 @@ app.use(errorHandler);
 
 const PORT = env.PORT;
 
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  const host = env.NODE_ENV === 'production' 
+    ? process.env.RENDER_EXTERNAL_URL || `http://0.0.0.0:${PORT}`
+    : `http://localhost:${PORT}`;
+  
+  console.log(`✅ Server running on ${host}`);
   console.log(`📚 Environment: ${env.NODE_ENV}`);
+  console.log(`🌐 Allowed CORS origins: ${allowedOrigins.join(', ')}`);
 });
