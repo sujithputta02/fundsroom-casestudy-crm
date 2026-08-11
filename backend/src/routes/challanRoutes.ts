@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { challanService } from '../services/challanService';
-import { authMiddleware, roleMiddleware } from '../middleware/auth';
-import { ApiResponse } from '../types';
+import { challanService } from '../services/challanService.js';
+import { authMiddleware, roleMiddleware } from '../middleware/auth.js';
+import { ApiResponse } from '../types/index.js';
 import { ChallanStatus, UserRole } from '@prisma/client';
 
 const router = Router();

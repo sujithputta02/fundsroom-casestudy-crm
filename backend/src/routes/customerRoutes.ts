@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { customerService } from '../services/customerService';
-import { authMiddleware, roleMiddleware } from '../middleware/auth';
-import { ApiResponse } from '../types';
+import { customerService } from '../services/customerService.js';
+import { authMiddleware, roleMiddleware } from '../middleware/auth.js';
+import { ApiResponse } from '../types/index.js';
 import { CustomerStatus, CustomerType, UserRole } from '@prisma/client';
 
 const router = Router();

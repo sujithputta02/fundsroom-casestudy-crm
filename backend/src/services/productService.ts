@@ -1,5 +1,5 @@
-import prisma from '../config/database';
-import { NotFoundError, ValidationError, ConflictError } from '../utils/errors';
+import prisma from '../config/database.js';
+import { NotFoundError, ValidationError, ConflictError } from '../utils/errors.js';
 
 export const productService = {
   async createProduct(data: {

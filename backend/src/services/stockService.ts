@@ -1,6 +1,6 @@
-import prisma from '../config/database';
+import prisma from '../config/database.js';
 import { StockMovementType } from '@prisma/client';
-import { NotFoundError, ConflictError, InsufficientStockError } from '../utils/errors';
+import { NotFoundError, ConflictError, InsufficientStockError } from '../utils/errors.js';
 
 export const stockService = {
   async recordStockMovement(data: {

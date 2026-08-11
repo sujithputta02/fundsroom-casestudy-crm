@@ -1,6 +1,6 @@
-import prisma from '../config/database';
+import prisma from '../config/database.js';
 import { Customer, CustomerStatus, CustomerType } from '@prisma/client';
-import { NotFoundError, ValidationError } from '../utils/errors';
+import { NotFoundError, ValidationError } from '../utils/errors.js';
 
 export const customerService = {
   async createCustomer(data: {

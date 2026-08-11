@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { dashboardService } from '../services/dashboardService';
-import { authMiddleware } from '../middleware/auth';
-import { ApiResponse } from '../types';
+import { dashboardService } from '../services/dashboardService.js';
+import { authMiddleware } from '../middleware/auth.js';
+import { ApiResponse } from '../types/index.js';
 
 const router = Router();
 

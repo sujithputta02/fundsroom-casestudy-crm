@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { env } from '../config/env';
-import { UnauthorizedError, ForbiddenError } from '../utils/errors';
-import { JwtPayload } from '../types';
+import { env } from '../config/env.js';
+import { UnauthorizedError, ForbiddenError } from '../utils/errors.js';
+import { JwtPayload } from '../types/index.js';
 import { UserRole } from '@prisma/client';
 
 // Extend Express Request type

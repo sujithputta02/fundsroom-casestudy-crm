@@ -1,4 +1,4 @@
-import prisma from '../config/database';
+import prisma from '../config/database.js';
 import { ChallanStatus, CustomerStatus } from '@prisma/client';
 
 export const dashboardService = {

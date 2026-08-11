@@ -1,7 +1,7 @@
 import bcryptjs from 'bcryptjs';
-import prisma from '../config/database';
+import prisma from '../config/database.js';
 import { UserRole } from '@prisma/client';
-import { ValidationError, NotFoundError } from '../utils/errors';
+import { ValidationError, NotFoundError } from '../utils/errors.js';
 
 export const userService = {
   async getAllUsers(limit = 50, offset = 0) {

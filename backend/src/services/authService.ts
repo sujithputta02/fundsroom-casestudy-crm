@@ -1,10 +1,10 @@
 import bcryptjs from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import type { User, UserRole } from '@prisma/client';
-import prisma from '../config/database';
-import { env } from '../config/env';
-import { UnauthorizedError, ValidationError } from '../utils/errors';
-import { JwtPayload } from '../types';
+import prisma from '../config/database.js';
+import { env } from '../config/env.js';
+import { UnauthorizedError, ValidationError } from '../utils/errors.js';
+import { JwtPayload } from '../types/index.js';
 
 export const authService = {
   async login(username: string, password: string) {

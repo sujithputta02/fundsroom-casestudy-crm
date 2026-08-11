@@ -1,11 +1,11 @@
-import prisma from '../config/database';
+import prisma from '../config/database.js';
 import { Challan, ChallanStatus, StockMovementType } from '@prisma/client';
 import {
   NotFoundError,
   ConflictError,
   InsufficientStockError,
   ValidationError,
-} from '../utils/errors';
+} from '../utils/errors.js';
 
 function generateChallanNumber(): string {
   const timestamp = Date.now().toString().slice(-6);

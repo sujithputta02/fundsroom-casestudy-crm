@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { authService } from '../services/authService';
-import { authMiddleware } from '../middleware/auth';
-import { ApiResponse } from '../types';
+import { authService } from '../services/authService.js';
+import { authMiddleware } from '../middleware/auth.js';
+import { ApiResponse } from '../types/index.js';
 
 const router = Router();
 

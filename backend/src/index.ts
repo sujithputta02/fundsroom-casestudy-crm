@@ -3,16 +3,16 @@ import cors from 'cors';
 import helmet from 'helmet';
 import 'express-async-errors';
 
-import { env } from './config/env';
-import { errorHandler } from './middleware/errorHandler';
-import { globalLimiter, authLimiter } from './middleware/rateLimiter';
-import authRoutes from './routes/authRoutes';
-import customerRoutes from './routes/customerRoutes';
-import productRoutes from './routes/productRoutes';
-import stockRoutes from './routes/stockRoutes';
-import challanRoutes from './routes/challanRoutes';
-import dashboardRoutes from './routes/dashboardRoutes';
-import userRoutes from './routes/userRoutes';
+import { env } from './config/env.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import { globalLimiter, authLimiter } from './middleware/rateLimiter.js';
+import authRoutes from './routes/authRoutes.js';
+import customerRoutes from './routes/customerRoutes.js';
+import productRoutes from './routes/productRoutes.js';
+import stockRoutes from './routes/stockRoutes.js';
+import challanRoutes from './routes/challanRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 const app = express();
 

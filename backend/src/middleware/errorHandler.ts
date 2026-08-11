@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { AppError, ValidationError } from '../utils/errors';
-import { ApiResponse } from '../types';
-import { isDevelopment } from '../config/env';
+import { AppError, ValidationError } from '../utils/errors.js';
+import { ApiResponse } from '../types/index.js';
+import { isDevelopment } from '../config/env.js';
 
 export const errorHandler = (
   error: Error | AppError,
