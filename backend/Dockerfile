@@ -1,10 +1,20 @@
-FROM node:18-slim
+FROM node:22-slim
 
 # Set working directory
 WORKDIR /app
 
-# Install OpenSSL and other dependencies required by Prisma
-RUN apt-get update -y && apt-get install -y openssl libssl-dev ca-certificates && rm -rf /var/lib/apt/lists/*
+# Install OpenSSL, Chromium, and other dependencies required by Prisma and Puppeteer
+RUN apt-get update -y && apt-get install -y \
+    openssl \
+    libssl-dev \
+    ca-certificates \
+    chromium \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Puppeteer to skip downloading Chrome (we installed Chromium via apt)
+ENV PUPPETEER_SKIP_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Copy package files
 COPY package*.json ./
