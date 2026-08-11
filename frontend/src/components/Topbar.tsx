@@ -1,4 +1,4 @@
-import { Search, Bell, Command, X, Menu } from 'lucide-react';
+import { Search, Bell, Command, X, Menu, AlertTriangle, Package } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useState, useEffect, useRef } from 'react';
 import { customerAPI, productAPI, challanAPI } from '../lib/api';
@@ -24,7 +24,13 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
   const [placeholderText, setPlaceholderText] = useState('Search...');
+  
+  // Notification states
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [lowStockProducts, setLowStockProducts] = useState<any[]>([]);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
 
   useEffect(() => {
     const updatePlaceholder = () => {
@@ -56,11 +62,45 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowResults(false);
       }
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Load low stock notifications
+  const loadLowStockNotifications = async () => {
+    if (!user?.enableStockAlerts) return;
+    
+    setIsLoadingNotifications(true);
+    try {
+      const response = await productAPI.getLowStock(10);
+      setLowStockProducts(response.data || []);
+    } catch (err) {
+      console.error('Failed to load stock alerts:', err);
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  };
+
+  // Load notifications when opening dropdown
+  useEffect(() => {
+    if (showNotifications) {
+      loadLowStockNotifications();
+    }
+  }, [showNotifications, user?.enableStockAlerts]);
+
+  // Auto-refresh notifications every 30 seconds if user has alerts enabled
+  useEffect(() => {
+    if (!user?.enableStockAlerts) return;
+    
+    loadLowStockNotifications();
+    const interval = setInterval(loadLowStockNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [user?.enableStockAlerts]);
 
   // Perform search based on role
   const performSearch = async (query: string) => {
@@ -272,13 +312,102 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       {/* Right Section: Notifications & Role Chip */}
       <div className="flex items-center gap-4 ml-4 font-sans">
         {/* Notifications */}
-        <button
-          className="p-2 rounded-custom-12 text-secondary hover:text-primary hover:bg-light-card-hover dark:hover:bg-dark-card-hover transition-colors relative"
-          title="Notifications"
-        >
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-status-warning rounded-full animate-pulse" />
-        </button>
+        <div className="relative" ref={notificationRef}>
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="p-2 rounded-custom-12 text-secondary hover:text-primary hover:bg-light-card-hover dark:hover:bg-dark-card-hover transition-colors relative"
+            title="Stock Alerts"
+          >
+            <Bell className="w-5 h-5" />
+            {lowStockProducts.length > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-status-warning rounded-full animate-pulse" />
+            )}
+          </button>
+
+          {/* Notifications Dropdown */}
+          {showNotifications && (
+            <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-light-card dark:bg-dark-card border border-light-border dark:border-dark-border rounded-custom-12 shadow-xl max-h-96 overflow-hidden z-50">
+              <div className="p-4 border-b border-default">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-primary">Stock Alerts</h3>
+                  {lowStockProducts.length > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-status-warning/10 text-status-warning text-xs font-medium">
+                      {lowStockProducts.length}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="max-h-80 overflow-y-auto">
+                {isLoadingNotifications ? (
+                  <div className="p-8 text-center text-secondary text-sm">
+                    Loading alerts...
+                  </div>
+                ) : !user?.enableStockAlerts ? (
+                  <div className="p-8 text-center">
+                    <Bell className="w-12 h-12 mx-auto mb-3 text-muted" />
+                    <p className="text-sm text-secondary mb-1">Stock alerts are disabled</p>
+                    <p className="text-xs text-muted">Enable them in your settings</p>
+                  </div>
+                ) : lowStockProducts.length > 0 ? (
+                  <div className="py-2">
+                    {lowStockProducts.map((product) => (
+                      <button
+                        key={product.id}
+                        onClick={() => {
+                          navigate('/products');
+                          setShowNotifications(false);
+                        }}
+                        className="w-full px-4 py-3 hover:bg-light-card-hover dark:hover:bg-dark-card-hover flex items-start gap-3 text-left transition-colors border-b border-default last:border-0"
+                      >
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-status-warning/10 flex items-center justify-center">
+                          <AlertTriangle className="w-5 h-5 text-status-warning" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-primary truncate mb-1">
+                            {product.name}
+                          </p>
+                          <p className="text-xs text-secondary mb-1">
+                            SKU: {product.sku} • {product.category}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-status-warning">
+                              Stock: {product.currentStock}
+                            </span>
+                            <span className="text-xs text-muted">
+                              (Min: {product.minimumStockAlert})
+                            </span>
+                          </div>
+                        </div>
+                        <Package className="w-4 h-4 text-muted flex-shrink-0 mt-1" />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center">
+                    <Package className="w-12 h-12 mx-auto mb-3 text-accent" />
+                    <p className="text-sm text-secondary mb-1">All stock levels are healthy</p>
+                    <p className="text-xs text-muted">No low stock alerts at this time</p>
+                  </div>
+                )}
+              </div>
+
+              {lowStockProducts.length > 0 && (
+                <div className="p-3 border-t border-default bg-light-card-hover/50 dark:bg-dark-card-hover/50">
+                  <button
+                    onClick={() => {
+                      navigate('/products');
+                      setShowNotifications(false);
+                    }}
+                    className="w-full text-xs font-medium text-accent hover:text-accent-strong transition-colors"
+                  >
+                    View All Products →
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* User Profile Chip */}
         <div className="flex items-center gap-3 px-3 py-1.5 rounded-full border border-default card-bg">
