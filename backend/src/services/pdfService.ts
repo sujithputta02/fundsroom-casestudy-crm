@@ -1,5 +1,6 @@
 import PDFDocument from 'pdfkit';
-import { prisma } from '../config/database.js';
+import prisma from '../config/database.js';
+import { Decimal } from '@prisma/client/runtime/library';
 
 export interface ChallanPDFData {
   id: string;
@@ -18,9 +19,9 @@ export interface ChallanPDFData {
   items: Array<{
     productNameSnapshot: string;
     skuSnapshot: string;
-    unitPriceSnapshot: number;
+    unitPriceSnapshot: number | Decimal;
     quantity: number;
-    total: number;
+    total: number | Decimal;
   }>;
   creator: {
     fullName: string;
@@ -165,11 +166,13 @@ export class PDFService {
       xPos += colWidths.sku;
       doc.text(item.quantity.toString(), xPos, yPos + 6);
       xPos += colWidths.qty;
-      doc.text(`₹${item.unitPriceSnapshot.toFixed(2)}`, xPos, yPos + 6);
+      const unitPrice = typeof item.unitPriceSnapshot === 'number' ? item.unitPriceSnapshot : item.unitPriceSnapshot.toNumber();
+      const itemTotal = typeof item.total === 'number' ? item.total : item.total.toNumber();
+      doc.text(`₹${unitPrice.toFixed(2)}`, xPos, yPos + 6);
       xPos += colWidths.price;
-      doc.text(`₹${item.total.toFixed(2)}`, xPos, yPos + 6);
+      doc.text(`₹${itemTotal.toFixed(2)}`, xPos, yPos + 6);
 
-      grandTotal += item.total;
+      grandTotal += itemTotal;
       yPos += 20;
     });
 
