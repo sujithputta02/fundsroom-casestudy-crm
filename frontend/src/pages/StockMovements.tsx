@@ -86,11 +86,14 @@ export function StockMovements() {
         reason: formData.reason.trim(),
       });
 
-      setSuccess('Stock IN recorded successfully!');
+      setSuccess('Stock IN recorded successfully! Product inventory updated.');
       setShowForm(false);
       setFormData({ productId: '', quantityChanged: 1, reason: '' });
-      loadStockMovements();
-      setTimeout(() => setSuccess(''), 3000);
+      
+      // Reload stock movements to show the new entry
+      await loadStockMovements();
+      
+      setTimeout(() => setSuccess(''), 5000);
     } catch (err: any) {
       setError(err.message || 'Failed to record stock movement');
     } finally {

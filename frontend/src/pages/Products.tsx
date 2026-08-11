@@ -43,6 +43,29 @@ export function Products() {
     return () => clearTimeout(timer);
   }, [search, category]);
 
+  // Auto-refresh when page becomes visible or gains focus
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadProducts();
+      }
+    };
+
+    const handleFocus = () => {
+      loadProducts();
+    };
+
+    // Refresh on visibility change (tab switching)
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Refresh on window focus (navigation back)
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
