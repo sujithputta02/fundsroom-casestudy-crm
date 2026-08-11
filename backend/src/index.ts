@@ -26,7 +26,10 @@ app.use(helmet());
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
+  'http://localhost:5175',
   'https://fundsroom-casestudy-crm.vercel.app',
+  'https://fundsroom-casestudy-crm-git-main-sujithputtas-projects.vercel.app', // Vercel preview URLs
+  'https://fundsroom-casestudy-crm-sujithputtas-projects.vercel.app', // Vercel project URLs
   env.FRONTEND_URL // From environment variable
 ].filter(Boolean);
 
@@ -34,6 +37,11 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps, Postman, curl)
     if (!origin) return callback(null, true);
+    
+    // Allow all Vercel preview deployments
+    if (origin.includes('vercel.app')) {
+      return callback(null, true);
+    }
     
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -45,6 +53,7 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Length', 'X-Request-Id'],
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
