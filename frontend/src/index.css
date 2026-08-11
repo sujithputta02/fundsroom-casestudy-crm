@@ -1,0 +1,242 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-white dark:bg-dark-bg text-light-text-primary dark:text-dark-text-primary transition-colors duration-200 antialiased;
+  }
+}
+
+@layer components {
+  /* Dark/Light mode classes */
+  .app-bg {
+    @apply bg-light-bg dark:bg-dark-bg;
+  }
+
+  .sidebar-bg {
+    @apply bg-light-sidebar dark:bg-dark-sidebar;
+  }
+
+  .card-bg {
+    @apply bg-light-card dark:bg-dark-card;
+  }
+
+  .card-hover-bg {
+    @apply hover:bg-light-card-hover dark:hover:bg-dark-card-hover transition-all duration-150 ease-out;
+  }
+
+  .input-bg {
+    @apply bg-light-input dark:bg-dark-input;
+  }
+
+  .border-subtle {
+    @apply border-light-border-subtle dark:border-dark-border-subtle;
+  }
+
+  .border-default {
+    @apply border-light-border dark:border-dark-border;
+  }
+
+  .text-primary {
+    @apply text-light-text-primary dark:text-dark-text-primary;
+  }
+
+  .text-secondary {
+    @apply text-light-text-secondary dark:text-dark-text-secondary;
+  }
+
+  .text-muted {
+    @apply text-light-text-muted dark:text-dark-text-muted;
+  }
+
+  /* Common components matching frontend.md */
+  .btn-primary {
+    @apply bg-accent hover:bg-accent-strong active:scale-[0.98] text-white px-4 py-2.5 rounded-custom-12 font-medium transition-all duration-150 ease-out shadow-sm shadow-accent/20 flex items-center justify-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply bg-light-card dark:bg-dark-card hover:bg-light-card-hover dark:hover:bg-dark-card-hover active:scale-[0.98] border border-light-border dark:border-dark-border text-primary px-4 py-2.5 rounded-custom-12 font-medium transition-all duration-150 ease-out flex items-center justify-center gap-2;
+  }
+
+  .btn-ghost {
+    @apply text-accent hover:bg-accent-soft px-3 py-2 rounded-custom-12 font-medium transition-colors duration-150 inline-flex items-center gap-1.5;
+  }
+
+  .card {
+    @apply card-bg border border-light-border dark:border-dark-border rounded-custom-16 p-padding-card transition-all duration-150;
+  }
+
+  .card-header {
+    @apply flex items-center justify-between mb-4;
+  }
+
+  .card-title {
+    @apply text-section font-semibold text-primary;
+  }
+
+  .card-eyebrow {
+    @apply text-eyebrow uppercase tracking-wider text-secondary mb-1.5 block;
+  }
+
+  .input-base {
+    @apply input-bg border border-light-border dark:border-dark-border rounded-custom-12 px-3.5 py-2.5 text-body text-primary placeholder:text-light-text-muted dark:placeholder:text-dark-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft transition-all duration-150;
+  }
+
+  .table-base {
+    @apply w-full border-collapse text-left;
+  }
+
+  .table-header {
+    @apply text-eyebrow uppercase tracking-wider text-secondary border-b border-light-border dark:border-dark-border sticky top-0 bg-light-bg/80 dark:bg-dark-bg/80 backdrop-blur-md z-10;
+  }
+
+  .table-row {
+    @apply border-b border-light-border-subtle dark:border-dark-border-subtle hover:bg-light-card-hover dark:hover:bg-dark-card-hover transition-colors duration-150;
+  }
+
+  .table-cell {
+    @apply px-4 py-3.5 text-body text-primary align-middle;
+  }
+
+  /* Status Badges */
+  .status-badge {
+    @apply px-3 py-1 rounded-full text-caption font-medium inline-flex items-center gap-1.5 tracking-wide;
+  }
+
+  .status-draft {
+    @apply bg-zinc-500/10 text-zinc-400 border border-zinc-500/20;
+  }
+
+  .status-confirmed {
+    @apply bg-emerald-500/10 text-status-positive border border-emerald-500/20;
+  }
+
+  .status-cancelled {
+    @apply bg-rose-500/10 text-status-negative border border-rose-500/20;
+  }
+
+  .status-lead {
+    @apply bg-sky-500/10 text-status-info border border-sky-500/20;
+  }
+
+  .status-active {
+    @apply bg-emerald-500/10 text-status-positive border border-emerald-500/20;
+  }
+
+  .status-inactive {
+    @apply bg-zinc-500/10 text-zinc-400 border border-zinc-500/20;
+  }
+
+  /* Reference 2 Glass KPI Cards */
+  .glass-kpi-card {
+    @apply relative overflow-hidden rounded-[20px] p-padding-card backdrop-blur-xl border border-light-border dark:border-white/10 text-light-text-primary dark:text-white bg-light-card/80 dark:bg-dark-card/50 shadow-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl hover:border-light-border-subtle dark:hover:border-white/20;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark .glass-kpi-card {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Skeleton Shimmer Loading Element */
+  .skeleton-base {
+    @apply relative overflow-hidden bg-light-card-hover dark:bg-dark-card-hover rounded-custom-12;
+  }
+
+  .skeleton-shimmer {
+    @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 dark:via-white/5 to-transparent;
+    animation: shimmer 1.8s infinite linear;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Stagger entrance delays for lists and dashboard grids */
+.stagger-1 { animation-delay: 0ms; }
+.stagger-2 { animation-delay: 40ms; }
+.stagger-3 { animation-delay: 80ms; }
+.stagger-4 { animation-delay: 120ms; }
+.stagger-5 { animation-delay: 160ms; }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-light-border dark:bg-dark-border rounded-full hover:bg-accent/40 transition-colors;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print Media Styles for Challan Receipt PDF */
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  
+  /* Hide everything except the print area */
+  body > *:not(#root), 
+  #root > *:not(.app-bg),
+  .app-bg > * {
+    display: none !important;
+  }
+
+  /* Force display of the modal content */
+  .fixed.inset-0 {
+    position: absolute !important;
+    display: block !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    inset: 0 !important;
+    z-index: auto !important;
+  }
+
+  .fixed.inset-0 > div {
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Hide print buttons and header close button */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Add print header if necessary or adjust borders */
+  .border-default, .border-light-border, .dark .border-dark-border {
+    border-color: #e5e7eb !important;
+  }
+}
+
+

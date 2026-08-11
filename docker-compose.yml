@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: fundsroom-db
+    environment:
+      POSTGRES_USER: fundsroom
+      POSTGRES_PASSWORD: fundsroom_dev_password
+      POSTGRES_DB: fundsroom
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fundsroom"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fundsroom-api
+    environment:
+      DATABASE_URL: postgresql://fundsroom:fundsroom_dev_password@postgres:5432/fundsroom
+      JWT_SECRET: dev_secret_key_change_in_production
+      JWT_EXPIRY: 7d
+      PORT: 5000
+      NODE_ENV: development
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/src
+    command: npm run dev
+
+  # Frontend (optional, can be run separately with `npm run dev`)
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: fundsroom-web
+  #   ports:
+  #     - "5173:5173"
+  #   depends_on:
+  #     - backend
+  #   environment:
+  #     VITE_API_URL: http://localhost:5000/api/v1
+
+volumes:
+  postgres_data:
