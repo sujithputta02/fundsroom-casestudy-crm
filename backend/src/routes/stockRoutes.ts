@@ -21,15 +21,18 @@ router.post(
   async (req: Request, res: Response, next) => {
     try {
       const body = createMovementSchema.parse(req.body);
-      const movement = await stockService.recordStockMovement({
-        ...body,
-        createdBy: req.user!.id,
-      });
+      const result = await stockService.adjustStock(
+        body.productId,
+        body.quantityChanged,
+        body.movementType,
+        body.reason,
+        req.user!.id
+      );
 
       const response: ApiResponse = {
         success: true,
-        data: movement,
-        message: 'Stock movement recorded successfully',
+        data: result,
+        message: 'Stock adjusted successfully',
       };
 
       res.status(201).json(response);
