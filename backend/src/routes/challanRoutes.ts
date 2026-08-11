@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { challanService } from '../services/challanService.js';
+import { PDFService } from '../services/pdfService.js';
 import { authMiddleware, roleMiddleware } from '../middleware/auth.js';
 import { ApiResponse } from '../types/index.js';
 import { ChallanStatus, UserRole } from '@prisma/client';
@@ -162,5 +163,20 @@ router.post(
     }
   }
 );
+
+// Generate PDF for challan
+router.get('/:id/pdf', authMiddleware, async (req: Request, res: Response, next) => {
+  try {
+    const pdfBuffer = await PDFService.generateChallanPDF(req.params.id);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="challan-${req.params.id}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    
+    res.send(pdfBuffer);
+  } catch (error) {
+    next(error);
+  }
+});
 
 export default router;

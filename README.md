@@ -511,6 +511,8 @@ bun run lint             # Run ESLint
 6. **No Payment Tracking** - Payment status not tracked (accounts receivable)
 7. **Render Free Tier** - Backend may experience cold starts (15-30 seconds) after inactivity due to Render's free tier spin-down. This is expected behavior and will resolve with paid hosting.
 
+**Note:** Stock alert notifications work but require user to enable them in Settings page.
+
 ### What's Working (✅ 100% Complete)
 - ✅ Authentication & JWT tokens
 - ✅ All 4 user roles with backend API protection

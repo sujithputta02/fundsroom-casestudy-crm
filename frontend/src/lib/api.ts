@@ -105,6 +105,27 @@ export const challanAPI = {
     api.post<any, ApiResponse>(`/challans/${id}/confirm`, {}),
   cancel: (id: string) =>
     api.post<any, ApiResponse>(`/challans/${id}/cancel`, {}),
+  downloadPDF: async (id: string, challanNumber: string) => {
+    const response = await axios.get(`${API_BASE_URL}/challans/${id}/pdf`, {
+      responseType: 'blob',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+      },
+    });
+    
+    // Create blob and download
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `challan-${challanNumber}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    return response;
+  },
 };
 
 // Dashboard API

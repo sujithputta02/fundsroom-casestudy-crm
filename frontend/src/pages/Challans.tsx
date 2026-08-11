@@ -158,6 +158,17 @@ export function Challans() {
     }
   };
 
+  const handleDownloadPDF = async (challanId: string, challanNumber: string) => {
+    try {
+      setError('');
+      await challanAPI.downloadPDF(challanId, challanNumber);
+      setSuccess('PDF downloaded successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to download PDF');
+    }
+  };
+
   const getStatusBadgeClass = (status: ChallanStatus) => {
     const baseClass = 'status-badge';
     return `${baseClass} status-${status.toLowerCase()}`;
@@ -478,6 +489,13 @@ export function Challans() {
                               title="View Details"
                             >
                               <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDownloadPDF(challan.id, challan.challanNumber)}
+                              className="btn-ghost text-blue-600 p-2 hover:bg-blue-500/10 rounded-custom-12"
+                              title="Download PDF"
+                            >
+                              <Printer className="w-4 h-4" />
                             </button>
                             <RoleGuard allowedRoles={['SALES', 'ADMIN']}>
                               {challan.status === 'DRAFT' && (
