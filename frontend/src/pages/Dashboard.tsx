@@ -232,8 +232,16 @@ export function Dashboard() {
       
       setTimeout(() => setAnimateCircles(true), 100);
       setTimeout(() => setAnimateChart(true), 300);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load dashboard data:', err);
+      
+      // Retry after delay on cold start errors
+      if (err?.code === 'COLD_START' || err?.code === 'SERVER_STARTING') {
+        // Auto-retry after 10 seconds
+        setTimeout(() => {
+          loadData();
+        }, 10000);
+      }
     } finally {
       setIsLoading(false);
     }
