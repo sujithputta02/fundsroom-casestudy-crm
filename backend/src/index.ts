@@ -52,9 +52,19 @@ app.use(express.urlencoded({ extended: true }));
 // Apply global rate limiting to all requests
 app.use(globalLimiter);
 
-// Health check
+// Health check with keep-alive
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
+  });
+});
+
+// Keep-alive endpoint for preventing Render cold starts
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
 });
 
 // API Routes (Apply authLimiter strictly to auth endpoints)
@@ -80,7 +90,7 @@ app.use(errorHandler);
 
 const PORT = env.PORT;
 
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   const host = env.NODE_ENV === 'production' 
     ? process.env.RENDER_EXTERNAL_URL || `http://0.0.0.0:${PORT}`
     : `http://localhost:${PORT}`;
@@ -89,3 +99,30 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📚 Environment: ${env.NODE_ENV}`);
   console.log(`🌐 Allowed CORS origins: ${allowedOrigins.join(', ')}`);
 });
+
+// Graceful shutdown handling
+const gracefulShutdown = (signal: string) => {
+  console.log(`\n🔄 Received ${signal}. Starting graceful shutdown...`);
+  
+  server.close((err) => {
+    console.log('✅ HTTP server closed');
+    
+    if (err) {
+      console.error('❌ Error during server shutdown:', err);
+      process.exit(1);
+    }
+    
+    console.log('✅ Graceful shutdown completed');
+    process.exit(0);
+  });
+  
+  // Force shutdown after 30 seconds
+  setTimeout(() => {
+    console.error('❌ Forced shutdown after timeout');
+    process.exit(1);
+  }, 30000);
+};
+
+// Handle shutdown signals
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

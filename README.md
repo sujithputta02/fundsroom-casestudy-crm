@@ -2,6 +2,37 @@
 
 A full-stack ERP/CRM operations portal built with Node.js, Express, React, and PostgreSQL. Designed for small wholesale/distribution companies with support for 4 user roles and complete order-to-delivery workflow.
 
+---
+
+## 🚀 Live Deployment
+
+### Live URLs
+- **Frontend**: https://fundsroom-casestudy-crm.vercel.app
+- **Backend API**: https://fundsroom-casestudy-crm.onrender.com
+- **GitHub Repository**: https://github.com/sujithputta02/fundsroom-casestudy-crm
+
+### Test Login Credentials
+
+| Role | Username | Password | Access |
+|------|----------|----------|--------|
+| **Admin** | `admin` | `admin123` | Full system access |
+| **Sales** | `sales` | `sales123` | Customer CRM, Sales Challans |
+| **Warehouse** | `warehouse` | `warehouse123` | Inventory, Stock Management |
+| **Accounts** | `accounts` | `accounts123` | Read-only access |
+
+### Documentation
+
+| Document | Description |
+|----------|-------------|
+| **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)** | Complete REST API reference with 26 endpoints, curl examples, request/response formats |
+| **[SETUP_GUIDE.md](./SETUP_GUIDE.md)** | Step-by-step local development setup instructions |
+| **[RENDER_DEPLOYMENT_GUIDE.md](./RENDER_DEPLOYMENT_GUIDE.md)** | Production deployment guide for Render + Vercel |
+| **[PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md)** | Architecture explanation, tech stack, database schema, design decisions |
+| **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** | Testing workflows and verification steps |
+| **[SUBMISSION_CHECKLIST.md](./SUBMISSION_CHECKLIST.md)** | Complete feature checklist with 100% completion status |
+
+---
+
 ## Features
 
 ✨ **Core Modules**
@@ -373,37 +404,57 @@ POST   /challans/:id/cancel     # Cancel confirmed challan
 
 ## Deployment
 
-### Backend (Docker on Render)
+### ✅ Production Deployment
 
-1. **Create Dockerfile**
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-EXPOSE 5000
-CMD ["npm", "start"]
+**Backend (Render):**
+- Platform: Render Web Service with Docker
+- URL: https://fundsroom-casestudy-crm.onrender.com
+- Database: Supabase PostgreSQL (ap-southeast-2)
+- Auto-deploy: Enabled on git push to main
+- Health check: `GET /health`
+- **Note**: Free tier may spin down after 15 minutes of inactivity, causing 30-45 second cold starts. This is normal Render behavior and resolves automatically.
+
+**Frontend (Vercel):**
+- Platform: Vercel Static Site
+- URL: https://fundsroom-casestudy-crm.vercel.app
+- Build: React 18 + Vite + Tailwind
+- Auto-deploy: Enabled on git push to main
+
+**Complete Deployment Guide:** See [RENDER_DEPLOYMENT_GUIDE.md](./RENDER_DEPLOYMENT_GUIDE.md)
+
+### Local Development Setup
+
+1. **Clone Repository**
+```bash
+git clone https://github.com/sujithputta02/fundsroom-casestudy-crm.git
+cd fundsroom-casestudy-crm
 ```
 
-2. **Deploy to Render**
-   - Connect GitHub repository
-   - Set environment variables
-   - Deploy automatically
+2. **Backend Setup**
+```bash
+cd backend
+bun install  # or npm install
+cp .env.example .env
+# Edit .env with your DATABASE_URL
+bun run prisma:generate
+bun run db:push
+bun run db:seed
+bun run dev
+```
 
-### Frontend (Vercel)
+3. **Frontend Setup** (in new terminal)
+```bash
+cd frontend
+bun install  # or npm install
+cp .env.example .env
+# Set VITE_API_URL=http://localhost:5000/api/v1
+bun run dev
+```
 
-1. **Deploy to Vercel**
-   - Connect GitHub repository
-   - Set API URL environment variable
-   - Automatic deployments on push
-
-### Database (Supabase/Neon)
-
-1. **Create PostgreSQL database**
-2. **Add connection string to backend**
-3. **Run migrations in production**
+4. **Access Application**
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:5000/api/v1
+- Login with test credentials listed above
 
 ---
 
@@ -449,16 +500,47 @@ bun run lint             # Run ESLint
 
 ---
 
-## Known Limitations
+## Known Limitations & Incomplete Parts
 
-1. **Inventory** - Single warehouse support (can be extended for multi-warehouse)
-2. **Reporting** - Basic dashboard only (can add advanced analytics)
-3. **Invoicing** - Not implemented (but challans have all data needed)
-4. **Bulk Operations** - Import/export not implemented
-5. **File Uploads** - Product images not implemented
-6. **PDF Export** - Challan PDF generation not implemented
-7. **Email Notifications** - Not implemented
-8. **Audit Logs** - Basic creation timestamps only
+### Current Limitations
+1. **Single Warehouse** - Currently supports one warehouse location (can extend to multi-warehouse)
+2. **Basic Analytics** - Dashboard shows core metrics only (no advanced charts/reports)
+3. **No Product Images** - File upload for product photos not implemented
+4. **No Email Notifications** - No automated emails for orders/alerts
+5. **Basic Audit Trail** - Only timestamps; no comprehensive activity logs
+6. **No Payment Tracking** - Payment status not tracked (accounts receivable)
+7. **Render Free Tier** - Backend may experience cold starts (15-30 seconds) after inactivity due to Render's free tier spin-down. This is expected behavior and will resolve with paid hosting.
+
+### What's Working (✅ 100% Complete)
+- ✅ Authentication & JWT tokens
+- ✅ All 4 user roles with backend API protection
+- ✅ Customer CRM with follow-ups
+- ✅ Product & inventory management
+- ✅ Stock movement tracking
+- ✅ Sales challan workflow (draft → confirm → cancel)
+- ✅ Transaction-based stock deduction
+- ✅ Stock validation (prevents negative stock)
+- ✅ Product snapshots in transactions
+- ✅ Low stock alerts with notifications
+- ✅ Dark/Light theme
+- ✅ Responsive design
+- ✅ Production deployment (Render + Vercel)
+- ✅ Role-based UI guards and access control
+- ✅ User management (Admin only)
+- ✅ PDF Export for challans
+- ✅ CSV Export/Import functionality
+- ✅ Invoice generation from challans
+
+### Architecture Details
+**For complete architecture explanation, see:** [PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md)
+
+**Key Design Decisions:**
+- **Database Transactions** - Challan confirmation uses atomic transactions to ensure stock consistency
+- **Product Snapshots** - Stores product name, SKU, price at time of sale (historical accuracy)
+- **Normalized Schema** - 8 tables with proper foreign keys and indexes
+- **JWT Authentication** - Stateless auth with 7-day token expiry
+- **Role-based Middleware** - Backend enforces permissions at API level
+- **Prisma ORM** - Type-safe database queries, prevents SQL injection
 
 ---
 
