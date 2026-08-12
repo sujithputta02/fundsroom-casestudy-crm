@@ -1,6 +1,7 @@
 import prisma from '../config/database.js';
 import { StockMovementType } from '@prisma/client';
 import { NotFoundError, ConflictError, InsufficientStockError } from '../utils/errors.js';
+import { realtimeService } from './realtimeService.js';
 
 export const stockService = {
   async recordStockMovement(data: {
@@ -113,6 +114,7 @@ export const stockService = {
       }),
     ]);
 
+    realtimeService.broadcastUpdate();
     return { product: updatedProduct, movement };
   },
 };

@@ -58,10 +58,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Apply global rate limiting to all requests
-app.use(globalLimiter);
-
-// Health check with keep-alive
+// Health check with keep-alive (bypasses rate limiting to prevent Render blocking)
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
@@ -75,6 +72,18 @@ app.get('/health', (req, res) => {
 app.get('/ping', (req, res) => {
   res.status(200).send('pong');
 });
+
+// Root endpoint for Render's default health check
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    message: 'FundsRoom ERP/CRM API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Apply global rate limiting to all business API requests
+app.use(globalLimiter);
 
 // API Routes (Apply authLimiter strictly to auth endpoints)
 app.use('/api/v1/auth', authLimiter, authRoutes);

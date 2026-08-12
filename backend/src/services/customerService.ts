@@ -1,6 +1,7 @@
 import prisma from '../config/database.js';
 import { Customer, CustomerStatus, CustomerType } from '@prisma/client';
 import { NotFoundError, ValidationError } from '../utils/errors.js';
+import { realtimeService } from './realtimeService.js';
 
 export const customerService = {
   async createCustomer(data: {
@@ -32,6 +33,7 @@ export const customerService = {
       },
     });
 
+    realtimeService.broadcastUpdate();
     return customer;
   },
 
@@ -46,6 +48,7 @@ export const customerService = {
       data,
     });
 
+    realtimeService.broadcastUpdate();
     return updated;
   },
 
@@ -127,6 +130,7 @@ export const customerService = {
       include: { creator: { select: { fullName: true } } },
     });
 
+    realtimeService.broadcastUpdate();
     return followUp;
   },
 

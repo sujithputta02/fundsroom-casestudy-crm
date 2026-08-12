@@ -77,50 +77,108 @@ export const dashboardService = {
   },
 
   async getWeeklySalesTrend() {
-    // Get last 7 days
+    // Get last 7 days including today (current period)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
     const sevenDaysAgo = new Date(today);
     sevenDaysAgo.setDate(today.getDate() - 6);
 
-    const confirmedChallans = await prisma.challan.findMany({
+    const fourteenDaysAgo = new Date(today);
+    fourteenDaysAgo.setDate(today.getDate() - 13);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    // Fetch confirmed challans for current period (last 7 days)
+    const confirmedChallansCurrent = await prisma.challan.findMany({
       where: {
         status: ChallanStatus.CONFIRMED,
         createdAt: {
           gte: sevenDaysAgo,
-          lt: new Date(),
+          lt: tomorrow,
         },
       },
       include: {
         items: true,
       },
-      orderBy: {
-        createdAt: 'asc',
+    });
+
+    // Fetch confirmed challans for previous period (prior 7 days)
+    const confirmedChallansPrevious = await prisma.challan.findMany({
+      where: {
+        status: ChallanStatus.CONFIRMED,
+        createdAt: {
+          gte: fourteenDaysAgo,
+          lt: sevenDaysAgo,
+        },
+      },
+      include: {
+        items: true,
       },
     });
 
-    // Group by day
-    const salesByDay: { [key: string]: number } = {};
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    // Calculate current total sales
+    const currentTotal = confirmedChallansCurrent.reduce((total, challan) => {
+      const challanTotal = challan.items.reduce((sum, item) => sum + Number(item.total), 0);
+      return total + challanTotal;
+    }, 0);
 
-    // Initialize all days with 0
+    // Calculate previous total sales
+    const previousTotal = confirmedChallansPrevious.reduce((total, challan) => {
+      const challanTotal = challan.items.reduce((sum, item) => sum + Number(item.total), 0);
+      return total + challanTotal;
+    }, 0);
+
+    // Calculate percentage change
+    let percentageChange = 0;
+    if (previousTotal > 0) {
+      percentageChange = parseFloat((((currentTotal - previousTotal) / previousTotal) * 100).toFixed(1));
+    } else if (currentTotal > 0) {
+      percentageChange = 100.0;
+    }
+
+    // Construct chronological trend data (oldest 6 days ago -> newest today)
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const trend = [];
+
     for (let i = 0; i < 7; i++) {
       const date = new Date(sevenDaysAgo);
       date.setDate(sevenDaysAgo.getDate() + i);
+      
       const dayName = days[date.getDay()];
-      salesByDay[dayName] = 0;
+      const dateStr = date.toISOString().split('T')[0];
+      const isToday = date.getTime() === today.getTime();
+
+      // Sum sales for this specific day
+      const dayStart = new Date(date);
+      const dayEnd = new Date(date);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+
+      const dayChallans = confirmedChallansCurrent.filter(c => {
+        const cDate = new Date(c.createdAt);
+        return cDate >= dayStart && cDate < dayEnd;
+      });
+
+      const daySales = dayChallans.reduce((total, challan) => {
+        const challanTotal = challan.items.reduce((sum, item) => sum + Number(item.total), 0);
+        return total + challanTotal;
+      }, 0);
+
+      trend.push({
+        day: dayName,
+        sales: Math.round(daySales),
+        date: dateStr,
+        isToday,
+      });
     }
 
-    // Sum sales by day
-    confirmedChallans.forEach((challan) => {
-      const dayName = days[challan.createdAt.getDay()];
-      const challanTotal = challan.items.reduce((sum, item) => {
-        return sum + Number(item.total);
-      }, 0);
-      salesByDay[dayName] += challanTotal;
-    });
-
-    return salesByDay;
+    return {
+      trend,
+      percentageChange,
+      currentTotal: Math.round(currentTotal),
+      previousTotal: Math.round(previousTotal),
+    };
   },
 
   async getStockHealth() {

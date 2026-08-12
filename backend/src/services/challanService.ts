@@ -6,6 +6,7 @@ import {
   InsufficientStockError,
   ValidationError,
 } from '../utils/errors.js';
+import { realtimeService } from './realtimeService.js';
 
 function generateChallanNumber(): string {
   const timestamp = Date.now().toString().slice(-6);
@@ -86,6 +87,7 @@ export const challanService = {
       },
     });
 
+    realtimeService.broadcastUpdate();
     return challan;
   },
 
@@ -227,6 +229,7 @@ export const challanService = {
         });
       });
 
+      realtimeService.broadcastUpdate();
       return updatedChallan;
     } catch (error) {
       // Transaction automatically rolled back on error
@@ -294,6 +297,7 @@ export const challanService = {
       });
     });
 
+    realtimeService.broadcastUpdate();
     return updatedChallan;
   },
 
@@ -371,6 +375,7 @@ export const challanService = {
       },
     });
 
+    realtimeService.broadcastUpdate();
     return updated;
   },
 };

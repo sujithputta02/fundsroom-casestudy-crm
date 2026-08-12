@@ -20,7 +20,7 @@ export function Dashboard() {
   const [kpis, setKpis] = useState<KPICard[]>([]);
   const [recentChallans, setRecentChallans] = useState<Challan[]>([]);
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
-  const [salesTrend, setSalesTrend] = useState<{ [key: string]: number }>({});
+  const [salesTrend, setSalesTrend] = useState<any>(null);
   const [stockHealth, setStockHealth] = useState<any>(null);
   const [recentCustomers, setRecentCustomers] = useState<any[]>([]);
   const [upcomingFollowUps, setUpcomingFollowUps] = useState<any[]>([]);
@@ -52,7 +52,7 @@ export function Dashboard() {
       const dashboardData = results[0].data;
       const allChallans: Challan[] = results[1].data || [];
       const lowStockData = results[2].data || [];
-      const salesData = results[3].data || {};
+      const salesData = results[3].data || null;
       const healthData = results[4].data || {};
 
       setRecentChallans(allChallans.slice(0, 5));
@@ -190,7 +190,7 @@ export function Dashboard() {
           },
         ]);
       } else if (role === 'ACCOUNTS') {
-        const weeklySales = (Object.values(salesData) as number[]).reduce((a: number, b: number) => a + b, 0);
+        const weeklySales = salesData?.currentTotal || 0;
         const weeklyPercentage = weeklySales === 0 ? 0 :
           Math.max(15, Math.min(100, (weeklySales / 200000) * 100));
           
@@ -250,12 +250,35 @@ export function Dashboard() {
   useEffect(() => {
     loadData();
 
-    // Real-time updates every 30 seconds
+    // Server-Sent Events for instant real-time updates
+    const sseUrl = `${(import.meta as any).env.VITE_API_URL || 'http://localhost:5001/api/v1'}/dashboard/live`;
+    const eventSource = new EventSource(sseUrl);
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'update') {
+          console.log('⚡ Real-time dashboard update received!');
+          loadData();
+        }
+      } catch (err) {
+        console.error('Failed to parse SSE event:', err);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.warn('SSE connection issue, falling back to polling.', err);
+    };
+
+    // Fallback updates every 30 seconds
     const interval = setInterval(() => {
       loadData();
     }, 30000);
 
-    return () => clearInterval(interval);
+    return () => {
+      eventSource.close();
+      clearInterval(interval);
+    };
   }, []);
 
   if (isLoading) {
@@ -357,24 +380,30 @@ export function Dashboard() {
                   <span className="card-eyebrow">FINANCE PERFORMANCE</span>
                   <h2 className="card-title">Weekly Sales Trend</h2>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-status-positive font-semibold bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-                    ↑ +18.4%
-                  </span>
-                </div>
+                {salesTrend && (
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                      salesTrend.percentageChange >= 0
+                        ? 'text-status-positive bg-emerald-500/10 border-emerald-500/20'
+                        : 'text-status-negative bg-rose-500/10 border-rose-500/20'
+                    }`}>
+                      {salesTrend.percentageChange >= 0 ? '↑' : '↓'} {salesTrend.percentageChange >= 0 ? '+' : ''}{salesTrend.percentageChange}%
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Interactive Area SVG Chart with Real Data */}
               <div className="w-full pt-4 relative">
                 {(() => {
-                  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                  const salesValues = days.map(day => salesTrend[day] || 0);
+                  const trendPoints = salesTrend?.trend || [];
+                  const salesValues = trendPoints.map((pt: any) => pt.sales);
                   const maxSales = Math.max(...salesValues, 1);
                   
                   const width = 500;
                   const height = 120;
-                  const points = salesValues.map((value, i) => {
-                    const x = (i / (days.length - 1)) * width;
+                  const points = salesValues.map((value: number, i: number) => {
+                    const x = (i / (trendPoints.length - 1 || 1)) * width;
                     const y = height - 20 - ((value / maxSales) * 80);
                     return { x, y };
                   });
@@ -400,7 +429,7 @@ export function Dashboard() {
                   };
 
                   const pathD = createSmoothPath(points);
-                  const areaPath = `${pathD} L ${width} ${height} L 0 ${height} Z`;
+                  const areaPath = points.length >= 2 ? `${pathD} L ${width} ${height} L 0 ${height} Z` : '';
 
                   return (
                     <svg className="w-full h-32 sm:h-40 overflow-visible" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
@@ -410,26 +439,30 @@ export function Dashboard() {
                           <stop offset="100%" stopColor="#7c5cff" stopOpacity="0.0" />
                         </linearGradient>
                       </defs>
-                      <path
-                        d={areaPath}
-                        fill="url(#chartGradient)"
-                        className={animateChart ? 'animate-fade-in' : 'opacity-0'}
-                        style={{ animationDelay: '200ms' }}
-                      />
-                      <path
-                        d={pathD}
-                        fill="none"
-                        stroke="#7c5cff"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={animateChart ? 'animate-draw-line' : 'opacity-0'}
-                        style={{ 
-                          strokeDasharray: '1000',
-                          strokeDashoffset: animateChart ? '0' : '1000',
-                          transition: 'stroke-dashoffset 1.5s ease-out'
-                        }}
-                      />
+                      {points.length >= 2 && (
+                        <>
+                          <path
+                            d={areaPath}
+                            fill="url(#chartGradient)"
+                            className={animateChart ? 'animate-fade-in' : 'opacity-0'}
+                            style={{ animationDelay: '200ms' }}
+                          />
+                          <path
+                            d={pathD}
+                            fill="none"
+                            stroke="#7c5cff"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className={animateChart ? 'animate-draw-line' : 'opacity-0'}
+                            style={{ 
+                              strokeDasharray: '1000',
+                              strokeDashoffset: animateChart ? '0' : '1000',
+                              transition: 'stroke-dashoffset 1.5s ease-out'
+                            }}
+                          />
+                        </>
+                      )}
                       {points.length > 0 && (
                         <>
                           <circle 
@@ -457,16 +490,13 @@ export function Dashboard() {
                 })()}
 
                 <div className="flex items-center justify-between text-caption text-secondary border-t border-light-border dark:border-dark-border pt-4 mt-2">
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => {
-                    const today = new Date().getDay();
-                    const dayIndex = (idx + 1) % 7;
-                    const isToday = dayIndex === today;
+                  {(salesTrend?.trend || []).map((pt: any, idx: number) => {
                     return (
                       <span 
-                        key={day}
-                        className={isToday ? 'text-accent font-semibold' : ''}
+                        key={pt.date + '-' + idx}
+                        className={pt.isToday ? 'text-accent font-semibold' : ''}
                       >
-                        {day} {isToday && <span className="hidden sm:inline">(Today)</span>}
+                        {pt.day} {pt.isToday && <span className="hidden sm:inline">(Today)</span>}
                       </span>
                     );
                   })}
